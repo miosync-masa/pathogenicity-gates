@@ -12,9 +12,9 @@ Date: 2026-03-25
 SSOC base: v3.32 (956 lines)
 
 Performance (1369 variants, full-length p53):
-  Sensitivity: 80.4% (520/647)
-  PPV:         89.2% (molecular-adjusted 91.6%)
-  Specificity: 53.0%
+  Sensitivity: 81.6% (528/647)
+  PPV:         88.7% (molecular-adjusted 91.6%)
+  Specificity: 50.0%
   Hotspots:    9/9
   Parameters fitted to ClinVar: ZERO
 
@@ -905,6 +905,16 @@ def gate_ch10_slim(pos, wt, mt):
                 expected = sdef['critical_aromatic'][pos]
                 if wt == expected and mt not in ('W', 'F', 'Y'):
                     return 'C'  # aromatic anchor destroyed
+
+        # ── Protein interaction motif: charge loss ──
+        # Physics: charged residues in binding motifs participate in
+        # electrostatic steering with binding partners. Charge loss
+        # disrupts partner recognition. Applies to BOX_I, BOX_II etc.
+        if sdef['type'] == 'protein_interaction':
+            q_wt = abs(AA_CHARGE.get(wt, 0))
+            q_mt = abs(AA_CHARGE.get(mt, 0))
+            if q_wt > 0.5 and q_mt < 0.3:
+                return 'C'  # charge loss in binding motif
 
         # ── CT_reg: charge pattern gate ──
         # Regulatory tail — charge distribution controls interactions
