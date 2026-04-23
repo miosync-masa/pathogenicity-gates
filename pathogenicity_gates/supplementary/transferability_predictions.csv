@@ -1,0 +1,23 @@
+protein,variant,position,wt,mt,mechanism,tier,expected_firing,regime,n_closed,prediction,fired_channels,fire_matches_expectation
+p53,R175H,175,R,H,DNA contact + Core,SPECIFIC+ADAPTABLE,True,structural,3,Pathogenic,Ch02_Zn;Ch03_Core;Ch05_Loop,True
+p53,R248W,248,R,W,DNA contact,SPECIFIC,True,structural,3,Pathogenic,Ch01_DNA;Ch05_Loop;Ch06_PPI,True
+p53,R273H,273,R,H,DNA contact,SPECIFIC,True,structural,2,Pathogenic,Ch01_DNA;Ch03_Core,True
+kras,K117N,117,K,N,charge loss,ADAPTABLE,True,structural,1,Pathogenic,Ch03_Core,True
+kras,A146T,146,A,T,helix strain,ADAPTABLE,True,structural,2,Pathogenic,Ch03_Core;Ch04_SS,True
+kras,G12V,12,G,V,catalytic Gly,FUTURE (catalytic),False,structural,0,Benign/VUS,,True
+kras,G12D,12,G,D,catalytic Gly,FUTURE (catalytic),False,structural,0,Benign/VUS,,True
+kras,G13D,13,G,D,catalytic Gly,FUTURE (catalytic),False,structural,0,Benign/VUS,,True
+tdp43,G294A,294,G,A,IDR Gly loss,UNIVERSAL,True,idr,1,Pathogenic,Ch12_IDR_Gly,True
+tdp43,G295V,295,G,V,IDR Gly loss,UNIVERSAL,True,idr,1,Pathogenic,Ch12_IDR_Gly,True
+tdp43,G348C,348,G,C,IDR Gly loss,UNIVERSAL,True,idr,1,Pathogenic,Ch12_IDR_Gly,True
+tdp43,N390D,390,N,D,IDR charge intro,UNIVERSAL,True,idr,1,Pathogenic,Ch10_SLiM,True
+tdp43,A315T,315,A,T,LCD β-branch,FUTURE (LLPS),False,idr,0,Benign/VUS,,True
+tdp43,A382T,382,A,T,LCD β-branch,FUTURE (LLPS),False,idr,0,Benign/VUS,,True
+brca1,C61G,61,C,G,RING Zn via Ch03,ADAPTABLE,True,structural,1,Pathogenic,Ch03_Core,True
+brca1,C64R,64,C,R,RING Zn + charge,ADAPTABLE,True,structural,1,Pathogenic,Ch03_Core,True
+brca1,T37R,37,T,R,charge intro,ADAPTABLE,True,structural,2,Pathogenic,Ch03_Core;Ch04_SS,True
+brca1,V1696L,1696,V,L,BRCT buried,ADAPTABLE,True,structural,2,Pathogenic,Ch03_Core;Ch04_SS,True
+brca1,K1702N,1702,K,N,BRCT charge loss,ADAPTABLE,True,structural,2,Pathogenic,Ch03_Core;Ch04_SS,True
+brca1,M1775R,1775,M,R,BRCT sulfur + charge,ADAPTABLE,True,structural,1,Pathogenic,Ch03_Core,True
+brca1,C1697R,1697,C,R,BRCT charge intro,ADAPTABLE,True,structural,1,Pathogenic,Ch03_Core,True
+brca1,A1708E,1708,A,E,BRCT charge intro,ADAPTABLE,True,structural,1,Pathogenic,Ch03_Core,True

@@ -1,0 +1,66 @@
+{
+  "SPECIFIC+ADAPTABLE": {
+    "total": 1,
+    "fired": 1,
+    "variants": [
+      "p53:R175H"
+    ],
+    "success_rate": 1.0
+  },
+  "SPECIFIC": {
+    "total": 2,
+    "fired": 2,
+    "variants": [
+      "p53:R248W",
+      "p53:R273H"
+    ],
+    "success_rate": 1.0
+  },
+  "ADAPTABLE": {
+    "total": 10,
+    "fired": 10,
+    "variants": [
+      "kras:K117N",
+      "kras:A146T",
+      "brca1:C61G",
+      "brca1:C64R",
+      "brca1:T37R",
+      "brca1:V1696L",
+      "brca1:K1702N",
+      "brca1:M1775R",
+      "brca1:C1697R",
+      "brca1:A1708E"
+    ],
+    "success_rate": 1.0
+  },
+  "FUTURE (catalytic)": {
+    "total": 3,
+    "fired": 0,
+    "variants": [
+      "kras:G12V",
+      "kras:G12D",
+      "kras:G13D"
+    ],
+    "success_rate": 0.0
+  },
+  "UNIVERSAL": {
+    "total": 4,
+    "fired": 4,
+    "variants": [
+      "tdp43:G294A",
+      "tdp43:G295V",
+      "tdp43:G348C",
+      "tdp43:N390D"
+    ],
+    "success_rate": 1.0
+  },
+  "FUTURE (LLPS)": {
+    "total": 2,
+    "fired": 0,
+    "variants": [
+      "tdp43:A315T",
+      "tdp43:A382T"
+    ],
+    "success_rate": 0.0
+  }
+}

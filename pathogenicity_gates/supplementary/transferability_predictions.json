@@ -1,0 +1,375 @@
+[
+  {
+    "protein": "p53",
+    "variant": "R175H",
+    "position": 175,
+    "wt": "R",
+    "mt": "H",
+    "mechanism": "DNA contact + Core",
+    "tier": "SPECIFIC+ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 3,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch02_Zn",
+      "Ch03_Core",
+      "Ch05_Loop"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "p53",
+    "variant": "R248W",
+    "position": 248,
+    "wt": "R",
+    "mt": "W",
+    "mechanism": "DNA contact",
+    "tier": "SPECIFIC",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 3,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch01_DNA",
+      "Ch05_Loop",
+      "Ch06_PPI"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "p53",
+    "variant": "R273H",
+    "position": 273,
+    "wt": "R",
+    "mt": "H",
+    "mechanism": "DNA contact",
+    "tier": "SPECIFIC",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 2,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch01_DNA",
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "kras",
+    "variant": "K117N",
+    "position": 117,
+    "wt": "K",
+    "mt": "N",
+    "mechanism": "charge loss",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "kras",
+    "variant": "A146T",
+    "position": 146,
+    "wt": "A",
+    "mt": "T",
+    "mechanism": "helix strain",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 2,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core",
+      "Ch04_SS"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "kras",
+    "variant": "G12V",
+    "position": 12,
+    "wt": "G",
+    "mt": "V",
+    "mechanism": "catalytic Gly",
+    "tier": "FUTURE (catalytic)",
+    "expected_firing": false,
+    "regime": "structural",
+    "n_closed": 0,
+    "prediction": "Benign/VUS",
+    "fired_channels": [],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "kras",
+    "variant": "G12D",
+    "position": 12,
+    "wt": "G",
+    "mt": "D",
+    "mechanism": "catalytic Gly",
+    "tier": "FUTURE (catalytic)",
+    "expected_firing": false,
+    "regime": "structural",
+    "n_closed": 0,
+    "prediction": "Benign/VUS",
+    "fired_channels": [],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "kras",
+    "variant": "G13D",
+    "position": 13,
+    "wt": "G",
+    "mt": "D",
+    "mechanism": "catalytic Gly",
+    "tier": "FUTURE (catalytic)",
+    "expected_firing": false,
+    "regime": "structural",
+    "n_closed": 0,
+    "prediction": "Benign/VUS",
+    "fired_channels": [],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "tdp43",
+    "variant": "G294A",
+    "position": 294,
+    "wt": "G",
+    "mt": "A",
+    "mechanism": "IDR Gly loss",
+    "tier": "UNIVERSAL",
+    "expected_firing": true,
+    "regime": "idr",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch12_IDR_Gly"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "tdp43",
+    "variant": "G295V",
+    "position": 295,
+    "wt": "G",
+    "mt": "V",
+    "mechanism": "IDR Gly loss",
+    "tier": "UNIVERSAL",
+    "expected_firing": true,
+    "regime": "idr",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch12_IDR_Gly"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "tdp43",
+    "variant": "G348C",
+    "position": 348,
+    "wt": "G",
+    "mt": "C",
+    "mechanism": "IDR Gly loss",
+    "tier": "UNIVERSAL",
+    "expected_firing": true,
+    "regime": "idr",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch12_IDR_Gly"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "tdp43",
+    "variant": "N390D",
+    "position": 390,
+    "wt": "N",
+    "mt": "D",
+    "mechanism": "IDR charge intro",
+    "tier": "UNIVERSAL",
+    "expected_firing": true,
+    "regime": "idr",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch10_SLiM"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "tdp43",
+    "variant": "A315T",
+    "position": 315,
+    "wt": "A",
+    "mt": "T",
+    "mechanism": "LCD \u03b2-branch",
+    "tier": "FUTURE (LLPS)",
+    "expected_firing": false,
+    "regime": "idr",
+    "n_closed": 0,
+    "prediction": "Benign/VUS",
+    "fired_channels": [],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "tdp43",
+    "variant": "A382T",
+    "position": 382,
+    "wt": "A",
+    "mt": "T",
+    "mechanism": "LCD \u03b2-branch",
+    "tier": "FUTURE (LLPS)",
+    "expected_firing": false,
+    "regime": "idr",
+    "n_closed": 0,
+    "prediction": "Benign/VUS",
+    "fired_channels": [],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "C61G",
+    "position": 61,
+    "wt": "C",
+    "mt": "G",
+    "mechanism": "RING Zn via Ch03",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "C64R",
+    "position": 64,
+    "wt": "C",
+    "mt": "R",
+    "mechanism": "RING Zn + charge",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "T37R",
+    "position": 37,
+    "wt": "T",
+    "mt": "R",
+    "mechanism": "charge intro",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 2,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core",
+      "Ch04_SS"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "V1696L",
+    "position": 1696,
+    "wt": "V",
+    "mt": "L",
+    "mechanism": "BRCT buried",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 2,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core",
+      "Ch04_SS"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "K1702N",
+    "position": 1702,
+    "wt": "K",
+    "mt": "N",
+    "mechanism": "BRCT charge loss",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 2,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core",
+      "Ch04_SS"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "M1775R",
+    "position": 1775,
+    "wt": "M",
+    "mt": "R",
+    "mechanism": "BRCT sulfur + charge",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "C1697R",
+    "position": 1697,
+    "wt": "C",
+    "mt": "R",
+    "mechanism": "BRCT charge intro",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  },
+  {
+    "protein": "brca1",
+    "variant": "A1708E",
+    "position": 1708,
+    "wt": "A",
+    "mt": "E",
+    "mechanism": "BRCT charge intro",
+    "tier": "ADAPTABLE",
+    "expected_firing": true,
+    "regime": "structural",
+    "n_closed": 1,
+    "prediction": "Pathogenic",
+    "fired_channels": [
+      "Ch03_Core"
+    ],
+    "fire_matches_expectation": true
+  }
+]
