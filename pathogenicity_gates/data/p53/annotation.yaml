@@ -1,0 +1,159 @@
+# ═══════════════════════════════════════════════════════════════
+# p53 (TP53_HUMAN) — Gate & Channel annotation
+# ═══════════════════════════════════════════════════════════════
+# Source:       UniProt P04637 (canonical, 393 aa)
+# Framework:    pathogenicity-gates v0.2.0
+# Generated:    2026-04-23 (Phase 2)
+# Verification: Matches legacy v18 FINAL byte-for-byte
+#
+# IMPORTANT:
+#   - Residue positions use UniProt canonical numbering (1-indexed)
+#   - WT amino acids are NOT written in this file for SLIM critical
+#     positions; they are extracted from p53_sequence.json (UniProt
+#     canonical sequence).
+#   - PTM entries include 'aa' for informational/verification purposes
+#     (matched against sequence via verify_ptm_consistency script).
+
+protein:
+  name: TP53
+  uniprot: P04637
+  description: "Cellular tumor antigen p53 (tumor suppressor)"
+
+# ═══════════════════════════════════════════════════════════════
+# Structures
+# ═══════════════════════════════════════════════════════════════
+structures:
+  primary:
+    pdb: pdb/1TSR.pdb
+    chain: B
+    description: "p53 core domain + DNA (Cho et al. 1994)"
+
+  oligomer:
+    pdb: pdb/2J0Z.pdb
+    chains: [A, B, C, D]
+    description: "p53 tetramerization domain (NMR, MODEL 1)"
+
+  coupled_folding:
+    - pdb: pdb/1YCR.pdb
+      partner: MDM2
+      reference: "Kussie et al. Science 1996"
+    - pdb: pdb/5HPD.pdb
+      partner: CBP_TAZ2
+      reference: "Krois et al. PNAS 2016"
+    - pdb: pdb/5HOU.pdb
+      partner: CBP_TAZ1
+      reference: "Krois et al. PNAS 2016"
+    - pdb: pdb/2L14.pdb
+      partner: CBP_NCBD
+      reference: "Lee et al. JMB 2010"
+    - pdb: pdb/2K8F.pdb
+      partner: p300_TAZ2_TAD1
+      reference: "Feng et al. Structure 2009"
+    - pdb: pdb/2MZD.pdb
+      partner: p300_TAZ2_TAD2
+      reference: "Miller Jenkins et al. Biochemistry 2015"
+
+# ═══════════════════════════════════════════════════════════════
+# Domain ranges
+# ═══════════════════════════════════════════════════════════════
+domains:
+  core: [94, 289]
+  tet:  [325, 356]
+
+# ═══════════════════════════════════════════════════════════════
+# Intrinsically Disordered Region (IDR) ranges
+# ═══════════════════════════════════════════════════════════════
+idr_ranges:
+  TAD1:   [1, 40]
+  TAD2:   [41, 61]
+  PRD:    [62, 93]
+  Linker: [290, 324]
+  CTD:    [357, 393]
+
+# ═══════════════════════════════════════════════════════════════
+# PTM sites (v17 baseline)
+# ═══════════════════════════════════════════════════════════════
+# Format: <position>: {aa: <1-letter>, mod: <type>, enzyme: <enzyme_str>}
+ptm_sites:
+  9:    {aa: S, mod: phospho,       enzyme: "HIPK4"}
+  15:   {aa: S, mod: phospho,       enzyme: "CDK5/ATM/AMPK"}
+  18:   {aa: T, mod: phospho,       enzyme: "CK1/VRK1/VRK2"}
+  20:   {aa: S, mod: phospho,       enzyme: "CHEK2/CK1/PLK3"}
+  24:   {aa: K, mod: ubiquitin,     enzyme: "E3-ligase"}
+  33:   {aa: S, mod: phospho,       enzyme: "CDK5/CDK7"}
+  37:   {aa: S, mod: phospho,       enzyme: "MAPKAPK5"}
+  46:   {aa: S, mod: phospho,       enzyme: "CDK5/DYRK2/HIPK2"}
+  55:   {aa: T, mod: phospho,       enzyme: "TAF1/GRK5"}
+  120:  {aa: K, mod: lactoyllysine, enzyme: "metabolic"}
+  139:  {aa: K, mod: lactoyllysine, enzyme: "metabolic"}
+  183:  {aa: S, mod: phospho,       enzyme: "AURKB"}
+  269:  {aa: S, mod: phospho,       enzyme: "AURKB"}
+  284:  {aa: T, mod: phospho,       enzyme: "AURKB"}
+  291:  {aa: K, mod: ubiquitin,     enzyme: "E3-ligase"}
+  292:  {aa: K, mod: ubiquitin,     enzyme: "E3-ligase"}
+  305:  {aa: K, mod: acetyl,        enzyme: "KAT"}
+  315:  {aa: S, mod: phospho,       enzyme: "AURKA/CDK1/CDK2"}
+  321:  {aa: K, mod: acetyl,        enzyme: "KAT"}
+  333:  {aa: R, mod: methyl,        enzyme: "PRMT5"}
+  335:  {aa: R, mod: dimethyl,      enzyme: "PRMT5"}
+  337:  {aa: R, mod: dimethyl,      enzyme: "PRMT5"}
+  351:  {aa: K, mod: ubiquitin,     enzyme: "E3-ligase"}
+  357:  {aa: K, mod: ubiquitin,     enzyme: "E3-ligase"}
+  370:  {aa: K, mod: methyl,        enzyme: "SMYD2"}
+  372:  {aa: K, mod: methyl,        enzyme: "SETD7"}
+  373:  {aa: K, mod: acetyl,        enzyme: "KAT"}
+  381:  {aa: K, mod: acetyl,        enzyme: "KAT"}
+  382:  {aa: K, mod: methyl,        enzyme: "KMT5A"}
+  386:  {aa: K, mod: sumo,          enzyme: "SUMO-ligase"}
+  392:  {aa: S, mod: phospho,       enzyme: "CK2/CDK2/NUAK1"}
+
+# ═══════════════════════════════════════════════════════════════
+# SLiM (Short Linear Motif) definitions
+# ═══════════════════════════════════════════════════════════════
+# IMPORTANT: WT amino acids are NOT written here.
+#   'critical_aromatic_positions' and 'critical_charged_positions' are
+#   position lists only; WT identity is read from p53_sequence.json.
+slim_defs:
+  MDM2_binding:
+    range: [17, 29]
+    type: coupled_folding_helix
+  BOX_I:
+    range: [13, 23]
+    type: protein_interaction
+  BOX_II:
+    range: [41, 55]
+    type: protein_interaction
+    critical_aromatic_positions: [53, 54]
+  BOX_V_PRD:
+    range: [66, 93]
+    type: sh3_polyproline
+  NLS1:
+    range: [305, 306]
+    type: signal_peptide
+    critical_charged_positions: [305, 306]
+  NLS2:
+    range: [369, 375]
+    type: signal_peptide
+    critical_charged_positions: [370, 372, 373]
+  NLS3:
+    range: [379, 384]
+    type: signal_peptide
+    critical_charged_positions: [379]
+  CT_reg:
+    range: [363, 393]
+    type: regulatory_tail
+
+# ═══════════════════════════════════════════════════════════════
+# Special position sets
+# ═══════════════════════════════════════════════════════════════
+benign_pro_poly: [72]  # rs1042522 (P72R/A/H known polymorphism)
+
+# ═══════════════════════════════════════════════════════════════
+# Data file references (paths relative to this YAML)
+# ═══════════════════════════════════════════════════════════════
+ppi_union_file:        p53_ppi_union.json
+ppi_interface_file:    p53_ppi_interface.json
+partner_face_file:     partner_face.json
+uniprot_features_file: p53_uniprot_features.json
+clinvar_file:          tp53_clinvar_missense.json
+sequence_file:         p53_sequence.json

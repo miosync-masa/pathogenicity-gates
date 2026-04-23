@@ -1,0 +1,57 @@
+# ═══════════════════════════════════════════════════════════════
+# TDP-43 (TADBP_HUMAN) — Gate & Channel annotation (minimal)
+# ═══════════════════════════════════════════════════════════════
+# Source:       UniProt Q13148 (canonical, 414 aa)
+# Framework:    pathogenicity-gates v0.4.0
+# Generated:    Phase 4
+# Scope:        MINIMAL — UNIVERSAL Channels only (IDR-focused, no primary PDB)
+#               LLPS/aggregation Channels are future work (experimental/)
+
+protein:
+  name: TDP-43
+  uniprot: Q13148
+  description: "TAR DNA-binding protein 43 (ALS/FTLD associated)"
+
+# Phase 4 minimal: NO primary structure required (IDR-only coverage).
+# This demonstrates that UNIVERSAL Channels work without PDB input.
+structures:
+  coupled_folding: []
+
+domains:
+  ntd:   [1, 102]
+  rrm1:  [103, 176]
+  rrm2:  [192, 262]
+
+idr_ranges:
+  # LCD (Low-complexity domain) — major ALS variant cluster
+  LCD: [274, 414]
+  Linker_NTD_RRM1: [103, 104]
+  Linker_RRM1_RRM2: [177, 191]
+
+# Key phospho sites in LCD region (UniProt-derived).
+ptm_sites:
+  379: {aa: S, mod: phospho, enzyme: "CK1/CK2"}
+  403: {aa: S, mod: phospho, enzyme: "CK1/CK2"}
+  404: {aa: S, mod: phospho, enzyme: "CK1/CK2"}
+  409: {aa: S, mod: phospho, enzyme: "CK1/CK2"}
+  410: {aa: S, mod: phospho, enzyme: "CK1/CK2"}
+
+slim_defs:
+  # NLS (nuclear localization signal, approximate)
+  NLS:
+    range: [82, 98]
+    type: signal_peptide
+  # NES (nuclear export signal)
+  NES:
+    range: [239, 250]
+    type: signal_peptide
+  # C-terminal tail: charge-regulated region within LCD
+  # Charge composition governs RNA/protein interactions and LLPS
+  # (biologically supported; see Conicella et al. 2016, Guenther 2018)
+  C_tail:
+    range: [388, 414]
+    type: regulatory_tail
+
+uniprot_features_file: tdp43_uniprot_features.json
+sequence_file: tdp43_sequence.json
+benign_pro_poly: []

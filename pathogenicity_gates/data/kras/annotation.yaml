@@ -1,0 +1,44 @@
+# ═══════════════════════════════════════════════════════════════
+# KRAS (KRAS_HUMAN) — Gate & Channel annotation (minimal)
+# ═══════════════════════════════════════════════════════════════
+# Source:       UniProt P01116 (canonical, 189 aa, isoform 4B)
+# Framework:    pathogenicity-gates v0.4.0
+# Generated:    Phase 4
+# Scope:        MINIMAL demonstration of cross-protein applicability
+#               Covers variants in Transferability Matrix (ADAPTABLE tier)
+
+protein:
+  name: KRAS
+  uniprot: P01116
+  description: "GTPase KRas (proto-oncogene)"
+
+structures:
+  primary:
+    pdb: pdb/4OBE.pdb
+    chain: A
+    description: "KRAS G-domain + GTP analog"
+  coupled_folding: []
+
+domains:
+  g_domain: [1, 166]
+
+idr_ranges:
+  HVR: [167, 189]
+
+# Minimal PTM set (key regulatory sites only).
+# Note: C185 farnesylation is in isoform 4A; canonical 4B has K185.
+ptm_sites:
+  104: {aa: K, mod: acetyl,    enzyme: "SIRT2/HDAC6"}
+  128: {aa: K, mod: ubiquitin, enzyme: "E3-ligase"}
+
+slim_defs:
+  P_loop:
+    range: [10, 17]
+    type: protein_interaction
+  CaaX:
+    range: [185, 189]
+    type: signal_peptide
+
+uniprot_features_file: kras_uniprot_features.json
+sequence_file: kras_sequence.json
+benign_pro_poly: []

@@ -1,0 +1,47 @@
+# ═══════════════════════════════════════════════════════════════
+# BRCA1 (BRCA1_HUMAN) — Gate & Channel annotation (minimal)
+# ═══════════════════════════════════════════════════════════════
+# Source:       UniProt P38398 (canonical, 1863 aa)
+# Framework:    pathogenicity-gates v0.4.0
+# Generated:    Phase 4
+# Scope:        MINIMAL — RING + BRCT domain coverage via merged PDB
+#               RING Zn coordination handled by Ch03 (not Ch02, which is p53-specific)
+
+protein:
+  name: BRCA1
+  uniprot: P38398
+  description: "Breast cancer type 1 susceptibility protein (tumor suppressor)"
+
+structures:
+  # Merged primary: RING (1JM7 MODEL 1 chain A, 1-103) + BRCT tandem
+  # (1JNX chain X, 1649-1859). Both re-labeled chain A; residue numbering
+  # gap between 103 and 1649 represents the intrinsically disordered middle.
+  primary:
+    pdb: pdb/brca1_ring_brct.pdb
+    chain: A
+    description: "BRCA1 RING (1JM7) + BRCT tandem (1JNX), merged to chain A"
+  coupled_folding: []
+
+domains:
+  ring: [1, 109]
+  brct: [1649, 1863]
+
+idr_ranges:
+  # Large middle region between RING and BRCT
+  middle: [110, 1648]
+
+# BRCA1 PTM sites (phospho-targets of ATM/CHEK2 in DDR signaling).
+ptm_sites:
+  1387: {aa: S, mod: phospho, enzyme: "ATM"}
+  1423: {aa: S, mod: phospho, enzyme: "ATM"}
+  1457: {aa: S, mod: phospho, enzyme: "CHEK2"}
+  1524: {aa: S, mod: phospho, enzyme: "ATM"}
+
+slim_defs:
+  NLS:
+    range: [503, 508]
+    type: signal_peptide
+
+uniprot_features_file: brca1_uniprot_features.json
+sequence_file: brca1_sequence.json
+benign_pro_poly: []
