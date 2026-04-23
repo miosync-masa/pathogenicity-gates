@@ -1,4 +1,5 @@
-# ZERO_parameter_1st_principles_GateFramework
+# pathogenicity-gates
+ZERO_parameter_1st_principles_GateFramework
 
 ## p53 Gate & Channel — Gate Logic Documentation
 **Version:** v17 Full-Length IDR Extension (2026-03-24)
