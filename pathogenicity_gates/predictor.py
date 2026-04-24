@@ -3,15 +3,19 @@ Main Predictor API for pathogenicity-gates.
 
 Phase 1 API (legacy compat):
     Predictor.from_legacy_v18("p53")
-Phase 2 API (YAML-driven, adapter-based):
+Phase 2 API (YAML-driven):
     Predictor.from_yaml("annotation.yaml")
     Predictor.from_protein("p53")
-Phase 3 API (regime-based channel dispatch, opt-in):
+Phase 3 API (regime-based channel dispatch, opt-in via mode parameter):
     pred = Predictor.from_protein("p53")
     pred.predict(pos, wt, mt, mode="channels")
+
+Phase 5 fix (post-v0.5.0): channels-only construction path via
+`legacy_impl=False`. This avoids importing `pathogenicity_gates.legacy`
+and makes p53-specific data (partner_face.json) optional at load time.
 """
 import os
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 # Force channel registration on import (side effect via __init__).
 from . import channels  # noqa: F401
@@ -25,8 +29,14 @@ class Predictor:
         Predictor.from_yaml("annotation.yaml") # Phase 2
         Predictor.from_protein("p53")          # Phase 2
 
-    Phase 3 adds a regime-based channel dispatch mode (opt-in):
+    Phase 3 adds a regime-based channel dispatch mode:
         pred.predict(pos, wt, mt, mode="channels")
+
+    Phase 5 fix: to run channels mode without loading legacy modules
+    (e.g. for proteins other than p53, or in clean environments without
+    partner_face.json), construct with `legacy_impl=False`:
+        pred = Predictor.from_protein("kras", legacy_impl=False)
+        pred.predict(12, 'G', 'V', mode="channels")
     """
 
     def __init__(self, _impl=None, _context=None, _annotation=None, _ctx_obj=None):
@@ -71,20 +81,37 @@ class Predictor:
         return cls(_impl=v17.predict_pathogenicity, _context=context)
 
     # ─────────────────────────────────────────────────────────────
-    # Phase 2 API (also builds Phase 3 PredictionContext)
+    # Phase 2 API (with Phase 5 legacy_impl flag)
     # ─────────────────────────────────────────────────────────────
     @classmethod
-    def from_yaml(cls, yaml_path: str) -> "Predictor":
-        """Phase 2: YAML-driven (adapter + legacy predict). Also builds
-        a PredictionContext object for Phase 3 channel mode access."""
+    def from_yaml(cls, yaml_path: str, legacy_impl: bool = True) -> "Predictor":
+        """Load predictor from a YAML annotation.
+
+        Args:
+            yaml_path: path to annotation.yaml
+            legacy_impl: If True (default, Phase 2 backward-compat), also
+                builds legacy v17/v18 context and _impl so that
+                `predict(mode='legacy')` works. If False, skips all legacy
+                imports and builds only the Phase 3 PredictionContext
+                (channels mode only). Use legacy_impl=False for clean-env
+                deployments or non-p53 proteins.
+        """
         from .annotations.loader import load_annotation
+        ann = load_annotation(yaml_path)
+
+        if not legacy_impl:
+            # Phase 5 legacy-free path
+            from .adapters.direct_builder import build_context_direct
+            ctx_obj = build_context_direct(ann)
+            return cls(_annotation=ann, _ctx_obj=ctx_obj)
+
+        # Phase 2 legacy path: also populates legacy modules for mode='legacy'
         from .adapters.v18_adapter import (
             build_context_from_annotation,
             override_legacy_constants_from_annotation,
         )
         from .channels.context import PredictionContext
 
-        ann = load_annotation(yaml_path)
         override_legacy_constants_from_annotation(ann)
         context = build_context_from_annotation(ann)
 
@@ -108,8 +135,13 @@ class Predictor:
         )
 
     @classmethod
-    def from_protein(cls, protein: str) -> "Predictor":
-        """Phase 2: load from bundled annotation."""
+    def from_protein(cls, protein: str, legacy_impl: bool = True) -> "Predictor":
+        """Load predictor from a bundled annotation.
+
+        Args:
+            protein: bundled protein name (e.g. 'p53', 'kras', 'tdp43', 'brca1')
+            legacy_impl: see from_yaml()
+        """
         bundled_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             'data', protein.lower()
@@ -120,7 +152,7 @@ class Predictor:
                 f"Bundled annotation for protein '{protein}' not found. "
                 f"Available: {cls.list_bundled_proteins()}"
             )
-        return cls.from_yaml(yaml_path)
+        return cls.from_yaml(yaml_path, legacy_impl=legacy_impl)
 
     @classmethod
     def list_bundled_proteins(cls) -> List[str]:
@@ -137,7 +169,7 @@ class Predictor:
         ])
 
     # ─────────────────────────────────────────────────────────────
-    # Prediction API (shared; Phase 3 adds `mode` parameter)
+    # Prediction API
     # ─────────────────────────────────────────────────────────────
     def predict(self, pos: int, wt: str, mt: str,
                 mode: str = "legacy") -> Dict[str, Any]:
@@ -147,8 +179,6 @@ class Predictor:
             pos, wt, mt: variant definition
             mode: "legacy" (default; calls v17 predict_pathogenicity) or
                   "channels" (Phase 3 regime-based channel dispatch).
-                  Both modes MUST produce identical n_closed and prediction
-                  for p53 (verified by test_phase3_channel_isolation).
         """
         if mode == "legacy":
             return self._predict_legacy(pos, wt, mt)
@@ -158,9 +188,12 @@ class Predictor:
             raise ValueError(f"Unknown mode: {mode!r}. Use 'legacy' or 'channels'.")
 
     def _predict_legacy(self, pos: int, wt: str, mt: str) -> Dict[str, Any]:
-        """Phase 1/2 path: legacy predict_pathogenicity call."""
         if self._impl is None:
-            raise RuntimeError("Predictor not initialized.")
+            raise RuntimeError(
+                "Legacy mode requires legacy_impl=True at construction time. "
+                "Rebuild with Predictor.from_protein(..., legacy_impl=True) "
+                "or use mode='channels'."
+            )
         result = self._impl(pos, wt, mt, **self._context)
         result['pos'] = pos
         result['wt'] = wt
@@ -168,7 +201,6 @@ class Predictor:
         return result
 
     def _predict_channels(self, pos: int, wt: str, mt: str) -> Dict[str, Any]:
-        """Phase 3 path: regime-based channel dispatch."""
         if self._ctx_obj is None:
             raise RuntimeError(
                 "PredictionContext not available. Use from_yaml() or "

@@ -50,11 +50,12 @@ def run(args):
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(2)
 
+    # Phase 5 fix: explain always uses channels mode -> legacy-free build.
     try:
         if args.protein:
-            pred = Predictor.from_protein(args.protein)
+            pred = Predictor.from_protein(args.protein, legacy_impl=False)
         else:
-            pred = Predictor.from_yaml(args.annotation)
+            pred = Predictor.from_yaml(args.annotation, legacy_impl=False)
     except Exception as e:
         print(f"ERROR: Failed to load predictor: {e}", file=sys.stderr)
         sys.exit(1)

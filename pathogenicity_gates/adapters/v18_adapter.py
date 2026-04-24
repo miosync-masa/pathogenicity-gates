@@ -76,6 +76,10 @@ def _backup_originals_once():
         return
     from ..legacy import p53_gate_v17_idr as v17
     from ..legacy import p53_gate_v18_final as v18
+    # Phase 5 fix: partner_face is now lazy-loaded. Trigger population
+    # before snapshotting so restore_legacy_constants() restores the
+    # p53-default (59 residues), not an empty set.
+    v18._ensure_partner_face_loaded()
     _ORIGINAL_LEGACY_CONSTANTS = {
         'v17.PTM_SITES':                    dict(v17.PTM_SITES),
         'v17.IDR_RANGES':                   dict(v17.IDR_RANGES),

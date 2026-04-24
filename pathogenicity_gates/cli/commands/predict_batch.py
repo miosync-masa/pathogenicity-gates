@@ -54,11 +54,13 @@ def run(args):
         print("ERROR: no variants found in input", file=sys.stderr)
         sys.exit(2)
 
+    # Phase 5 fix: channels mode is the CLI default; build legacy-free.
+    legacy_impl = (args.mode == 'legacy')
     try:
         if args.protein:
-            pred = Predictor.from_protein(args.protein)
+            pred = Predictor.from_protein(args.protein, legacy_impl=legacy_impl)
         else:
-            pred = Predictor.from_yaml(args.annotation)
+            pred = Predictor.from_yaml(args.annotation, legacy_impl=legacy_impl)
     except Exception as e:
         print(f"ERROR: Failed to load predictor: {e}", file=sys.stderr)
         sys.exit(1)
