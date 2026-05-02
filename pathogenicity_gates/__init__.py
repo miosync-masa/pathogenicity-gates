@@ -10,7 +10,7 @@ Reference:
   PLOS Computational Biology (under review).
 """
 
-__version__ = "0.5.1-dev"
+__version__ = "0.5.1"
 
 from .predictor import Predictor
 
