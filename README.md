@@ -1,243 +1,267 @@
 # pathogenicity-gates
-ZERO_parameter_1st_principles_GateFramework
 
-## p53 Gate & Channel — Gate Logic Documentation
-**Version:** v17 Full-Length IDR Extension (2026-03-24)
-**Performance:** 1369 variants, Sensitivity 80.4%, PPV 89.2% (molecular-adjusted 91.6%), Parameters = 0
-**Core domain preservation:** Sensitivity 90.9% (v16同等, 転落ゼロ)
+**Zero-parameter, first-principles Gate & Channel framework for missense variant interpretation**
 
----
-## Overview: PCC/SCC Architecture
+[![PyPI](https://img.shields.io/pypi/v/pathogenicity-gates)](https://pypi.org/project/pathogenicity-gates/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19214739.svg)](https://doi.org/10.5281/zenodo.19214739)
 
-The Gate & Channel framework classifies each missense variant through independent Channels, each containing one or more Gates. A Gate evaluates a specific physical constraint; if the constraint is disrupted by the mutation, the Gate returns CLOSED. If ANY Gate across ANY Channel returns CLOSED, the variant is predicted pathogenic.
-
-**Decision rule:** Pathogenic if n_closed ≥ 1 (binary, no scoring, no weighting)
-
-**Input data:**
-- 1TSR.pdb: p53 core domain + DNA complex (Chain B, residues 94-289)
-- 2J0Z.pdb: p53 tetramerization domain (Chain A, residues 325-360)
-- 1YCR.pdb: p53 TAD (17-29) + MDM2 complex (coupled folding interface)
-- SSOC v3.32 framework (956 lines, 80-90% code reuse from materials science)
-- UniProt P04637 PTM annotations (31 sites)
-
-**Coverage:**
-- Core domain (94-289): 3D gates from 1TSR — 9 channels, 30+ gates
-- Tetramer domain (325-360): 3D gates from 2J0Z — Ch8
-- IDR regions (1-93, 290-324, 357-393): 1D gates — Ch5/7/10/GateB
+**v18 FINAL** — 12 channels, 2 Getas, 4 bundled proteins, zero fitted parameters.
 
 ---
 
-## Gate & Channel 3 Principles
+## What is this?
 
-1. **閾値は物理から導出する**（データに合わせない）
-2. **Gate は IF THEN で書ける**（連続的スコアではない）
-3. **逃した変異は「閾値が甘い」のではなく「Gate が足りない」**
+`pathogenicity-gates` is a first-principles framework that classifies missense variants by explicit IF-THEN physical rules — not by regression, not by learned weights, not by latent scores. Each prediction names the specific physical constraint that is violated: a destroyed zinc-binding site, a lost nuclear localization signal, a disrupted coupled-folding interface, a broken proline-directed kinase motif, or any of dozens of other auditable physical gates.
 
----
-
-## Gate Tier Classification
-
-| Tier | Physics level | Benign | Position dependence |
-|------|--------------|--------|-------------------|
-| S (Supreme) | Chemical law / backbone constraint | 0 | None or minimal |
-| A (Structural) | Coordination / packing / network | 1-3 | Burial-dependent |
-| B (Functional) | Biological annotation (PPI, PTM) | 3-6 | Annotation-dependent |
+The framework is not a model of biology but a **transcription** of it: the physical laws have been established by generations of structural biologists, biochemists, and polymer physicists. What this package provides is their translation into IF-THEN rules — one mechanism at a time.
 
 ---
 
-## Channel 1: DNA Contact Disruption
+## Quick Start
 
-**Physical basis:** Side-chain to DNA distance determines direct readout contacts. Mutations altering charge, H-bond capacity, or volume at the DNA interface disrupt transcription factor function.
-
-**Input:** SC heavy atom → DNA heavy atom minimum distance from 1TSR Chains E/F.
-
-### Gate 1.1: Direct contact (d < 3.5 Å)
-```
-IF d_sc_dna < 3.5:
-    IF wt ∈ {R,K} AND mt ∉ {R,K}  → CLOSED
-    IF ΔHB_capacity ≥ 1            → CLOSED
-    IF |ΔQ| > 0.5                  → CLOSED
+```bash
+pip install pathogenicity-gates
 ```
 
-### Gate 1.2: Proximal contact (3.5 ≤ d < 6.0 Å)
+### Single variant
+```bash
+pathogenicity-gates predict --protein p53 --mutation R175H
+# → Pathogenic (Ch02_Zn, Ch03_Core, Ch05_Loop)
 ```
-IF d_sc_dna < 6.0:
-    IF ΔQ < -0.5                    → CLOSED
-    IF wt ∈ {R,K} AND mt ∉ {R,K,H} → CLOSED
-    IF ΔHB_capacity ≥ 2             → CLOSED
+
+### Batch prediction
+```bash
+pathogenicity-gates predict-batch --protein p53 --input variants.csv --output results.json
+```
+
+### Explain a call
+```bash
+pathogenicity-gates explain --protein p53 --mutation R175H
+# → Ch02_Zn: Direct Zn ligand (H179 coordination shell). H→R disrupts...
+# → Ch03_Core: Buried charge introduction. R175H places +0.1 charge...
+# → Ch05_Loop: Loop anchor disruption at L2/L3 junction...
+```
+
+### List bundled proteins
+```bash
+pathogenicity-gates list-proteins
+# → p53, kras, tdp43, brca1
+```
+
+### Add a new protein
+No code modification required. Supply a YAML annotation file + a PDB or AlphaFold structure:
+```bash
+pathogenicity-gates predict --protein my_protein --config my_protein.yaml --structure my_protein.pdb --mutation G12V
 ```
 
 ---
 
-## Channel 2: Zn Coordination (Layered Cascade Model)
+## 4 Principles
 
-**Physical basis:** Zn²⁺ tetrahedrally coordinated by C176, H179, C238, C242. Monotonic pathogenicity gradient: L1(100%) > L2(100%) > L3(73%) > L4(65%).
+1. **Thresholds are derived from physics, not from data fitting.**
+   Ramachandran angles, van der Waals radii, pKa values — all from textbooks.
 
-### Gate 2.1: Direct coordination (Layer 1)
-```
-IF pos ∈ {176, 238, 242, 179} → CLOSED
-```
+2. **Gates are IF-THEN, not continuous scores.**
+   Binary decisions. No regression. No weighting. Parameters = ZERO.
 
-### Gate 2.2: Electrostatic environment (Layer 2-3, d < 8 Å)
-```
-IF d_Cα_Zn < 8.0 AND |ΔQ| > 0.5 → CLOSED
-```
+3. **Missed variants = missing Gate, not a threshold problem.**
+   When a pathogenic variant escapes, it names the next IF-THEN to be written.
 
-**Discovery:** H179 at 4.12 Å is NOT a coordination ligand but a rigid electrostatic anchor (phantom coordination). B-factor z = -1.08.
+4. **Incidental closures → physical Geta exception, not threshold relaxation.**
+   When a gate expansion creates false positives on legitimately tolerated variants, a Geta (post-closure exception rule) is added. Getas must be protein-independent, rescue zero ClinVar Pathogenic variants, and generalize to any protein where the primary gate applies.
 
 ---
 
-## Channel 3: Core Integrity (Symmetry-Complete)
+## Architecture: 12 Channels + 2 Getas
 
-### Tier S Gates (benign = 0)
+The framework evaluates each variant across independent channels. A variant is predicted **Pathogenic** if any gate in any channel closes: `n_closed ≥ 1`.
 
-**S1: X→Gly (Ramachandran freedom explosion)**
-```
-IF mt == G AND wt ≠ G AND burial > 0.5 → CLOSED
-```
+A second hierarchical layer (**Geta**) reverses specific closures whose physical condition predicts tolerance. Gates and Getas operate on **disjoint variant populations** — there is no coverage-vs-tolerance trade-off.
 
-**S2: S...π interaction loss**
-```
-IF wt ∈ {M,C} AND mt ∉ {M,C} AND n_aro ≥ 1 AND burial > 0.5 → CLOSED
-```
+### Structured-domain channels (from 3D coordinates)
 
-**S3: Met sulfur-rich network (Zn seismic isolation)**
-```
-IF wt == M AND mt ∉ {M,C} AND n_sul ≥ 3 → CLOSED
-```
+| Channel | Physical target | Input |
+|---------|----------------|-------|
+| **Ch01_DNA** | DNA-contact disruption | Side-chain → DNA distance (1TSR) |
+| **Ch02_Zn** | Metal coordination (Zn²⁺) | Cα → Zn distance, charge logic |
+| **Ch03_Core** | Symmetry-complete core integrity | Burial, volume, charge, H-bond, aromaticity, sulfur |
+| **Ch04_SS** | Secondary-structure incompatibility | Helix/β propensity, backbone strain |
+| **Ch05_Loop** | Ramachandran endpoint constraints | Pro→X, Gly→X, loop anchors |
+| **Ch06_PPI** | Protein-protein interface | Union of 16 p53 complex structures (66 residues) |
+| **Ch07_PTM** | PTM-site chemistry + proximity | 31 UniProt sites, MECE structured/IDR split |
+| **Ch08_Oligomer** | Tetramer-interface disruption | Exposure asymmetry, rigid multi-chain hub |
+| **Ch09_SaltBridge** | Surface salt-bridge networks | Charged pairs within 10 Å at surface |
 
-**S4: β-branch loss in β-strand**
-```
-IF ss == E AND wt ∈ {V,I,T} AND mt ∉ {V,I,T} AND burial > 0.5 → CLOSED
-```
+### IDR-specific channels (1D, no coordinates)
 
-**S5: polar→hydrophobic (H-bond partner loss)**
-```
-IF hydro_wt < -1 AND hydro_mt > 1 AND burial > 0.7 → CLOSED
-```
+| Channel | Physical target | Mechanism |
+|---------|----------------|-----------|
+| **Ch10_SLiM** | Short linear motif disruption | Gate C (6-partner coupled folding), PPII, NLS, aromatic anchor, CT-reg |
+| **Ch11_IDR_Pro** | Context-dependent Pro→X | PPII, SLiM interior, SLiM boundary, PTM-proximal, isolated |
+| **Ch12_IDR_Gly** | IDR glycine constraint | G→X: side-chain introduction constrains required backbone freedom |
 
-### Surface Hydrophobic Exposure ("Dark Matter" Gate)
-```
-IF burial < 0.5 AND hydro_wt > 1.0:
-    IF volume_loss > 20      → CLOSED   (interface cavity)
-    IF hydro_mt < 0           → CLOSED   (desolvation penalty)
-```
+### Geta layer (post-closure exceptions)
 
-### Electrostatic Keystone Gate
-```
-IF wt ∈ {D,E,K,R} AND n_charged_neighbors ≥ 4 → CLOSED
-```
+| Geta | Acts on | Condition | Rescue |
+|------|---------|-----------|--------|
+| **Geta_VI** | Ch03_Core | V↔I: both β-branched aliphatic, differ by one CH₂ | 0 Path rescued |
+| **Geta_IDR_PTM** | Ch07_PTM (IDR) | Charge-preserving K↔R, R↔H, S↔T within ±1 of PTM site | 0 Path rescued |
 
-### Tier A Gates (symmetric pairs)
+### Transferability
 
-**Volume (cavity ⇄ steric clash):**
-```
-E_cavity  = C_CAVITY × P_void × ΔV_loss × burial² + C_HYDRO × ΔH_loss × burial
-E_steric  = C_CAVITY × P_void × ΔV_gain × burial²
-IF E_cavity > 1.5                                  → CLOSED
-IF E_cavity > 0.5 AND aromatic_loss                 → CLOSED
-IF E_cavity > 0.8 AND burial > 0.9                 → CLOSED
-IF ss == E AND E_cavity > 0.5 AND burial > 0.85    → CLOSED (β-sheet sensitivity)
-IF E_steric > 1.5                                   → CLOSED
-IF E_steric > 0.5 AND burial > 0.85                → CLOSED
-IF ss ∈ {C,T} AND (E_cav+E_ste) > 0.5 AND bur>0.7 → CLOSED (coil/turn volume)
-```
-
-**Charge (loss ⇄ intro ⇄ flip):**
-```
-IF charge_intro AND burial > 0.7 AND dry > 0.4   → CLOSED
-IF charge_loss AND burial > 0.7                   → CLOSED
-IF charge_flip (sign reversal) AND burial > 0.7   → CLOSED
-```
-
-**Hydrophobicity (hydro→polar ⇄ polar→hydro):**
-```
-IF hw>0.5 AND hm<0 AND Δh>2 AND burial>0.7     → CLOSED
-IF hw<0 AND hm>1 AND Δh>2 AND burial>0.7        → CLOSED
-```
-
-**H-bond (loss ⇄ gain):**
-```
-IF ΔHB ≥ 1 AND burial > 0.7   → CLOSED
-IF ΔHB ≤ -2 AND burial > 0.7  → CLOSED
-```
-
-**Aromatic gain:**
-```
-IF wt ∉ {F,W,Y} AND mt ∈ {F,W,Y} AND burial > 0.7 → CLOSED
-```
+| Tier | Channels | Input requirement |
+|------|----------|-------------------|
+| **UNIVERSAL** | Ch07, Ch10, Ch11, Ch12, Geta_VI, Geta_IDR_PTM | Sequence + annotation only |
+| **ADAPTABLE** | Ch03, Ch04, Ch05, Ch06, Ch09 | PDB or AlphaFold (pLDDT > 70) |
+| **SPECIFIC** | Ch01 (DNA-bound), Ch02 (metal site) | Target-specific structural input |
 
 ---
 
-## Channel 4: Secondary Structure Disruption
+## Performance (p53, v18 FINAL)
 
-### Gate 4.1: Helix
-```
-IF ss == H:
-    IF ΔP_helix < -0.30 AND burial > 0.3              → CLOSED
-    IF backbone_strain < -0.5 AND burial > 0.3         → CLOSED
-    IF mt == P AND helix_position == core               → CLOSED
-    IF wt == P AND mt ≠ P AND hpos ∈ {cap, core}      → CLOSED
-```
+| Metric | Value |
+|--------|-------|
+| Variants evaluated | 1,369 |
+| **Sensitivity** | **84.5%** |
+| **PPV** | **89.1%** |
+| Core domain sensitivity | 90.9% |
+| Hotspots captured | 9/9 |
+| VUS reclassified | 407/578 (70.4%) |
+| Mol-adjusted PPV | 92.2% |
+| **Fitted parameters** | **0** |
 
-### Gate 4.2: Beta
-```
-IF ss == E:
-    IF ΔP_beta < -0.30 AND burial > 0.5 AND bnf > 0.3 → CLOSED
-    IF ΔP_beta < -0.50 AND burial > 0.3                → CLOSED
-    IF wt == P AND mt ≠ P AND burial > 0.5             → CLOSED
-```
+### Per-region sensitivity
 
----
+| Region | Gate type | Sensitivity | PPV |
+|--------|-----------|-------------|-----|
+| Core (94–289) | 3D | 90.9% | 94.7% |
+| Tet (325–356) | 3D | 67.5% | 71.1% |
+| TAD1 (1–40) | 1D | 92.1% | 81.5% |
+| TAD2 (41–61) | 1D | 76.2% | 71.4% |
+| PRD (62–93) | 1D | 66.7% | 76.9% |
+| Linker (290–324) | 1D | 41.9% | 65.0% |
+| CTD (357–393) | 1D | 70.6% | 70.6% |
 
-## Channel 5: Loop/Pro/Gly (Ramachandran Unified)
+### Hotspot capture (9/9)
 
-### Gate 5.S1: Pro→X in structured domain (Tier S)
-```
-IF wt == P AND mt ≠ P → CLOSED
-```
-Position-independent in structured regions.
-
-### Gate 5.2-5.4: Gly→X, X→Pro, Loop anchors
-```
-IF wt == G AND mt ≠ G AND pos ∈ L2/L3      → CLOSED
-IF mt == P AND wt ≠ P AND ss ∈ {H,E}       → CLOSED
-IF pos ∈ loop_anchors AND large_change       → CLOSED
-```
-
-### Gate 5.IDR: Pro→X in IDR (v17, MECE-separated from 5.S1)
-
-**Physical basis:** Pro→X in IDR is NOT blanket Tier S. IDR Pro serves different physical functions depending on context. Gate fires only where backbone constraint is functionally required.
-
-**Known benign exclusion:** P72 (rs1042522, common polymorphism)
-
-```
-1. PRD polyproline motif (62-93):
-   IF wt == P AND mt ≠ P AND 62 ≤ pos ≤ 93 AND pos ≠ 72 → CLOSED
-   Physics: Pro defines PPII helix structure
-
-2. SLiM interior:
-   IF wt == P AND mt ≠ P AND pos ∈ SLiM_range → CLOSED
-   Physics: Pro constrains binding interface geometry
-
-3. SLiM boundary (±2): N-cap helix breaker
-   IF wt == P AND mt ≠ P AND |pos - SLiM_start| ≤ 2 → CLOSED
-   Physics: Pro lacks amide H → cannot form i→i+4 H-bond
-   → helix propagation stops at Pro → defines folding boundary
-   → loss of boundary → helix overruns → entropic penalty
-   Discovery: P12 = BOX_I (13-23) N-cap. P12L/R both pathogenic.
-
-4. PTM proximity (±2):
-   IF wt == P AND mt ≠ P AND |pos - PTM| ≤ 2 → CLOSED
-   Physics: Pro backbone constrains modification enzyme access
-
-5. Isolated IDR Pro:
-   → OPEN (pure tether, no functional constraint)
-```
+| Variant | Channels closed |
+|---------|----------------|
+| R175H | Ch02_Zn, Ch03_Core, Ch05_Loop |
+| C176F | Ch02_Zn, Ch03_Core, Ch05_Loop |
+| H179R | Ch02_Zn |
+| Y220C | Ch03_Core |
+| G245S | Ch03_Core, Ch05_Loop |
+| R248W | Ch01_DNA, Ch05_Loop, Ch06_PPI |
+| R249S | Ch03_Core, Ch05_Loop |
+| R273H | Ch01_DNA, Ch03_Core |
+| R280K | Ch01_DNA, Ch03_Core |
 
 ---
 
-## Channel 6: PPI Interface (16 PDB structures, 66 residues)
+## Cross-protein validation
+
+The same channels — without modification — capture the dominant pathogenic mechanisms in three additional cancer-relevant proteins. Where they fail, the failure names a specific gate yet to be written.
+
+### KRAS
+- **Captured:** G12V/D/C, G13D (Ch03_Core, Ch04_SS); K117N, A146T (Ch03_Core); K184Q (IDR charge logic)
+- **Gate yet to be written:** Q61H/L → catalytic / cofactor channel (transition-state geometry around Mg²⁺/GTP)
+
+### TDP-43
+- **Captured:** G294A, G295V, G348C (Ch12_IDR_Gly); A315T, A382T (Ch10 PPII spacer β-branch); N382D, N390D (Ch10 IDR charge)
+- **Gate yet to be written:** M337V → aggregation / LLPS channel (aromatic spacing, charge patterning)
+
+### BRCA1
+- **RING domain:** C61G, C64R, T37R (Ch02_Zn analog, Ch03_Core)
+- **BRCT buried:** V1696L, K1702N, A1708E, M1775R, C1697R (Ch03_Core)
+- **BRCT phospho-pocket:** S1655F, R1699Q, R1699W, S1715R (Gate C with ABRAXAS1 + BACH1 + CtIP; PDBs 1T29, 1T15, 1Y98)
+
+### Gate C architectural portability
+
+The "union of partner faces + non-conservative filter" pattern is protein-independent:
+
+```
+p53 TAD  × {MDM2, CBP TAZ2, CBP TAZ1, NCBD, p300 TAZ2}  → 59 union residues, 6 PDBs
+BRCA1 BRCT × {ABRAXAS1, BACH1, CtIP}                     → working Gate C, 3 PDBs
+```
+
+Replace the partner set → Gate C works. No logic change required.
+
+---
+
+## Gate Specifications
+
+### Channel 1: DNA-contact disruption (Ch01_DNA)
+
+Side-chain heavy-atom to DNA heavy-atom distance from 1TSR (Chain B → Chains E/F).
+
+```
+Gate 1.1 — Direct contact (d < 3.5 Å):
+  IF wt ∈ {R,K} AND mt ∉ {R,K}  → CLOSED
+  IF ΔHB_capacity ≥ 1            → CLOSED
+  IF |ΔQ| > 0.5                  → CLOSED
+
+Gate 1.2 — Proximal contact (3.5 ≤ d < 6.0 Å):
+  IF ΔQ < -0.5                    → CLOSED
+  IF wt ∈ {R,K} AND mt ∉ {R,K,H} → CLOSED
+  IF ΔHB_capacity ≥ 2             → CLOSED
+```
+
+### Channel 2: Zn coordination (Ch02_Zn)
+
+Layered cascade model. Direct ligands: C176, H179, C238, C242.
+
+```
+Gate 2.1 — Direct coordination (Layer 1):
+  IF pos ∈ {176, 238, 242, 179} → CLOSED
+
+Gate 2.2 — Electrostatic environment (d_Cα_Zn < 8.0 Å):
+  IF d_Cα_Zn < 8.0 AND |ΔQ| > 0.5 → CLOSED
+```
+
+### Channel 3: Core integrity (Ch03_Core)
+
+Symmetry-complete packing logic with burial-dependent thresholds.
+
+**Tier S (benign = 0):**
+```
+S1: X→Gly  — Ramachandran freedom explosion (buried)
+S2: S...π  — Chalcogen interaction loss (M/C → non-M/C, aromatic neighbor)
+S3: Met sulfur network — Zn seismic isolation (M → non-M/C, n_sul ≥ 3)
+S4: β-branch loss in β-strand — interlock collapse (V/I/T → non-V/I/T, buried β)
+S5: polar→hydrophobic — H-bond partner loss (deeply buried)
+```
+
+**Tier A (symmetric pairs):**
+- Volume: cavity ⇄ steric clash
+- Charge: loss ⇄ introduction ⇄ sign reversal
+- Hydrophobicity: hydro→polar ⇄ polar→hydro
+- H-bond: loss ⇄ gain
+- Aromatic: gain in buried sites
+- Surface hydrophobic exposure
+- Electrostatic keystone (≥4 charged neighbors)
+
+**Geta_VI:** V↔I substitutions at buried β-branched positions are rescued — both rotamers fit the same cavity.
+
+### Channel 4: Secondary structure (Ch04_SS)
+
+```
+Helix: ΔP_helix < -0.30, backbone strain < -0.5, Pro disruption
+Beta:  ΔP_beta < -0.30 (buried), Pro loss in β-structure
+```
+
+### Channel 5: Structured loop/Pro/Gly (Ch05_Loop)
+
+```
+Pro→X in structured regions → CLOSED (Tier S, position-independent)
+Gly→X in L2/L3 loops → CLOSED
+X→Pro in helices/strands → CLOSED
+Loop anchor large perturbation → CLOSED
+```
+
+### Channel 6: PPI interface (Ch06_PPI)
+
+Union of 16 p53 complex structures (66 interface residues in core domain).
 
 ```
 IF n_pdbs ≥ 3 AND physicochemical_change     → CLOSED
@@ -245,303 +269,209 @@ IF min_d < 3.5 AND charge/hydro_change       → CLOSED
 IF PPI_nb ≥ 5 AND charge/volume_change       → CLOSED
 ```
 
----
+### Channel 7: PTM logic (Ch07_PTM) — MECE split
 
-## Channel 7: PTM Sites (v17: MECE split + 31 sites + Proline-directed kinase)
+31 UniProt P04637 sites. Structured and IDR sub-gates have different proximity radii.
 
-**v17 changes:**
-- Expanded from 5 core domain sites to 31 full-length sites (UniProt P04637)
-- MECE split into 7a/7b/7c/7d sub-gates with different physics per domain type
-- OR logic restored for proximity (charge and volume are independent mechanisms)
-
-### Gate 7a: Direct PTM site hit (all domains)
 ```
-IF pos ∈ PTM_SITES AND wt == expected AND mt ≠ expected → CLOSED
+7a: Direct PTM site hit — any domain
+7b: Proximity ±2 — structured domains (OR logic: charge OR volume)
+7c: Proximity ±1 — IDR (OR logic: charge OR volume)
+7d: [S/T]-P proline-directed kinase motif — Pro ring = recognition element
 ```
 
-### Gate 7b: PTM proximity — structured domains (Core/Tet)
-```
-IF |pos - PTM| ≤ 2 AND (|ΔQ| > 0.5 OR |ΔV| > 50) → CLOSED
-```
-**Physics:** Rigid backbone transmits perturbation over ±2 residues. Charge disruption (electrostatic recognition) and volume disruption (steric access) are INDEPENDENT mechanisms → OR logic.
+**Confirmed [S/T]-P motifs:**
 
-### Gate 7c: PTM proximity — IDR
-```
-IF |pos - PTM| == 1 AND (|ΔQ| > 0.5 OR |ΔV| > 50) → CLOSED
-```
-**Physics:** IDR backbone flexibility absorbs ±2 perturbation → only ±1 is physically transmitted.
+| Phosphosite | Pro | Kinase | Validation |
+|-------------|-----|--------|------------|
+| S33 | P34 | CDK5/CDK7 | P34A/T/R/S = all Path (4/4) |
+| S46 | P47 | CDK5/DYRK2/HIPK2 | P47T/R = Path (2/2) |
+| S315 | P316 | CDK1/CDK2 | P316L/S = Path (2/2) |
 
-**MECE rationale:** Structured and IDR regions have different backbone rigidity → different physical radius of perturbation → separate gates. v16 used a single gate for both → caused 7 Core/Tet fallbacks when IDR was added. v17 MECE split eliminated all fallbacks.
+**Geta_IDR_PTM:** Charge-preserving substitutions (K↔R, R↔H, S↔T) within ±1 of a PTM site in IDR are rescued — disordered backbone absorbs local geometry, charge and H-bond chemistry preserved.
 
-### Gate 7d: Proline-directed kinase motif [S/T]-P (v17 new)
+### Channel 8: Oligomer interface (Ch08_Oligomer)
+
+Tetramerization domain (2J0Z). Exposure asymmetry + rigid multi-chain hub logic.
+
 ```
-IF wt == P AND mt ≠ P
-AND PTM_SITES[pos-1] exists AND mod_type == 'phospho'
-AND kinase ∈ PROLINE_DIRECTED_KINASES
-→ CLOSED
+Rigid hub (Tier S): IF n_chains_contacted ≥ 2 → CLOSED
 ```
 
-**Physical basis:** CDK, DYRK, HIPK family kinases recognize [S/T]-P substrate motif. Pro's cyclic imino acid (5-membered ring) structure is part of the kinase substrate recognition pocket. P→X (any X) destroys the ring → kinase cannot recognize substrate → phosphorylation abolished. This is INDEPENDENT of the physicochemical properties of X — the ring structure itself is the recognition element.
-
-**Proline-directed kinases:** CDK1, CDK2, CDK5, CDK7, DYRK2, HIPK2, HIPK4, MAPK
-
-**Confirmed [S/T]-P motifs in p53:**
-| Phosphosite | Pro position | Kinase | ClinVar validation |
-|-------------|-------------|--------|-------------------|
-| S33 | P34 | CDK5/CDK7 | P34A/T/R/S = all Pathogenic ✓ |
-| S46 | P47 | CDK5/DYRK2/HIPK2 | P47T/R = Pathogenic ✓ |
-| S315 | P316 | CDK1/CDK2 | P316L/S = Pathogenic ✓ |
-
-**P47S = True Molecular Positive:** ClinVar classifies P47S as Benign due to incomplete penetrance (African-ancestry polymorphism). However, S46 phosphorylation is biochemically reduced in P47S carriers, and apoptosis induction is impaired. Gate & Channel correctly identifies the molecular mechanism disruption. This demonstrates that the framework's resolution exceeds ClinVar's clinical penetrance-based classification.
-
----
-
-## Channel 8: Tetramer Interface (SCC + Rigid Hub)
-
-### Gate 8.1-8.2: SCC exposure gates
-```
-IF exposure > 0.3 AND physicochemical_change → CLOSED
-```
-
-### Gate 8.3: Rigid hub (Tier S candidate, benign = 0)
-```
-IF n_chains_contacted ≥ 2 AND demand > 0.3 → CLOSED
-```
-
----
-
-## Channel 9: Surface Salt Bridge Network (Tier S)
+### Channel 9: Surface salt bridge (Ch09_SaltBridge)
 
 ```
 IF burial < 0.5 AND opposite_charge_partner < 10 Å AND |ΔQ| > 0.5 → CLOSED
 ```
 
----
+### Channel 10: SLiM motif disruption (Ch10_SLiM)
 
-## Channel 10: SLiM Motif Disruption (v17 new, IDR-specific)
+| Sub-gate | Mechanism | Key variants |
+|----------|-----------|-------------|
+| **Gate C** | Coupled folding: 6-partner union face (1YCR/5HPD/5HOU/2L14/2K8F/2MZD; 59 residues). Non-conservative substitution at union-face residue → CLOSED | F19X, W23X, L26X, D49H, I50T |
+| **Gate A** | PPII incompatibility: aromatic intro in PRD → CLOSED | X→W/F/Y in PRD |
+| **Gate A2** | PPII spacer β-branch: {A,G}→{V,I,T} → CLOSED | A69V, A83V, A86V |
+| **Gate NLS** | NLS charge loss: basic→neutral → CLOSED | R379C, K373N |
+| **Gate ARO** | Aromatic anchor loss in binding pocket → CLOSED | W53L, F54L |
+| **Gate CT_reg** | C-terminal regulatory charge pattern disruption → CLOSED | D391N, T387R |
 
-**Physical basis:** Short Linear Motifs (SLiMs) in IDR regions mediate protein-protein interactions through coupled folding, signal peptide recognition, and regulatory charge patterns. Each sub-gate captures a distinct physical mechanism.
+### Channel 11: IDR proline (Ch11_IDR_Pro)
 
-### Gate 10.C: Coupled Folding Interface (1YCR)
+Context-dependent Pro→X in disordered regions. P72 (rs1042522) explicitly excluded.
+
 ```
-IF pos ∈ COUPLED_FOLDING_MDM2 AND wt == expected AND mt ≠ expected → CLOSED
-```
-
-**Physical basis:** p53 TAD residues 17-29 form α-helix upon binding MDM2. The binding face geometry is so precise that even conservative mutations (D→E, +1.5 Å side chain) are lethal. Interface extracted from 1YCR X-ray structure (sidechain < 5 Å to MDM2 AND sidechain contacts > 0).
-
-**Interface residues (11):**
-```python
-COUPLED_FOLDING_MDM2 = {
-    17:'E', 18:'T', 19:'F', 20:'S', 22:'L', 23:'W',
-    25:'L', 26:'L', 27:'P', 28:'E', 29:'N'
-}
-```
-
-**Note:** D21 (min_dist = 6.59 Å, SC_contacts = 0) is NOT at the binding face. D21E is pathogenic for a different reason (unknown, requires additional binding partner data).
-
-### Gate 10.A: PPII Incompatibility in PRD
-```
-IF region == PRD AND wt ∉ {W,F,Y} AND mt ∈ {W,F,Y} → CLOSED
+1. PRD polyproline motif → CLOSED (PPII structure)
+2. SLiM interior → CLOSED (binding interface geometry)
+3. SLiM boundary N-cap (±2) → CLOSED (Pro lacks amide H → helix breaker)
+4. PTM proximity (±2) → CLOSED (backbone constrains enzyme access)
+5. Isolated IDR Pro → OPEN (no defined functional context)
 ```
 
-**Physical basis:** Polyproline II helix (φ≈-75°, ψ≈+145°) has an extended, left-handed backbone geometry. Bulky aromatic side chains (W, F, Y) sterically clash with the PPII backbone — this is a geometric constraint, not a volume threshold.
-
-### Gate 10.A2: PPII Spacer β-Branch Disruption in PRD
-```
-IF region == PRD AND wt ∈ {A,G} AND mt ∈ {V,I,T} → CLOSED
-```
-
-**Physical basis:** PPII helix = [Pro]-[spacer]-[Pro]-[spacer] pattern. Spacer positions (A, G) must be small and non-β-branched. β-branched residues (V, I, T) have two heavy atoms on Cβ → restrict φ-angle rotation → cannot maintain φ≈-75° required for PPII. This is a DIFFERENT physical mechanism from Gate A (aromatic backbone clash) — Gate A2 is about φ-angle restriction at the spacer position.
-
-**Discovery source:**巴 (Gemini) identified the Ala-spacer pattern in PRD FN analysis. Gate A2 improved PRD Sensitivity by +26.7pp (40.0% → 66.7%).
-
-### Gate 10.NLS: Nuclear Localization Signal Charge Loss
-```
-IF pos ∈ NLS_critical_charged AND wt == expected_basic
-AND |Q_wt| > 0.5 AND |Q_mt| < 0.5 → CLOSED
-```
-
-**Physical basis:** NLS = basic amino acid cluster required for importin-α recognition. Loss of basic residue at critical position → nuclear import abolished.
-
-**NLS sites:** NLS1 (K305, R306), NLS2 (K370, K372, K373), NLS3 (R379)
-
-### Gate 10.ARO: Aromatic Anchor Loss
-```
-IF pos ∈ SLiM_critical_aromatic AND wt == expected AND mt ∉ {W,F,Y} → CLOSED
-```
-
-**Physical basis:** Aromatic residues (W53, F54 in BOX_II) serve as hydrophobic anchors for protein-protein binding. Aromatic identity matters for π-stacking and van der Waals packing in the binding pocket.
-
-### Gate 10.CT: C-terminal Regulatory Charge Pattern
-```
-IF region == CT_reg (363-393) AND |ΔQ| > 0.5 → CLOSED
-```
-
-**Physical basis:** The C-terminal regulatory domain is PTM-dense (7 modification sites in 30 residues). Charge distribution controls electrostatic interactions with binding partners. Charge change disrupts the regulatory charge pattern.
-
----
-
-## Gate B: IDR Glycine Constraint (v17 new)
+### Channel 12: IDR glycine (Ch12_IDR_Gly)
 
 ```
 IF is_IDR AND wt == G AND mt ≠ G → CLOSED
 ```
 
-**Physical basis:** In IDR, Glycine has NO side chain → maximum backbone freedom (φ/ψ access to all Ramachandran space). This freedom is functionally required for:
-- Coupled folding hinges (binding-induced conformational change)
-- Entropic chain behavior (linker function)
-- Backbone flexibility for PTM enzyme access
-
-G→X introduces a side chain = steric constraint on backbone. The "absence of structure" IS the function — introducing structure destroys it.
-
-**Connection to founding insight:** "構造がない" は "構造がまだ解かれてない" ではない。"構造が存在しない" — the absence of structure is the information.
+In disordered regions, backbone freedom **is** the function. G→X introduces a side chain → constrains the conformational space required for coupled folding, flexible linker behavior, or PTM accessibility. The absence of structure is the information.
 
 ---
 
-## Symmetry Verification (all pairs confirmed ✅)
+## Symmetry verification (all pairs confirmed)
 
 | Forward | Reverse | Status |
 |---------|---------|--------|
-| cavity | steric clash | ✅ ✅ |
-| Gly→X | X→Gly | ✅ ✅ |
-| Pro→X | X→Pro | ✅ ✅ |
-| charge_loss | charge_intro | ✅ ✅ |
-| charge_flip | (self-symmetric) | ✅ |
-| hydro→polar | polar→hydro | ✅ ✅ |
-| Hb loss | Hb gain | ✅ ✅ |
-| aro loss | aro gain | ✅ ✅ |
-| β-branch loss | (= steric) | ✅ ✅ |
-| PPII compatible→incompatible | (Gate A) | ✅ |
-| PPII spacer→β-branch | (Gate A2) | ✅ |
+| Cavity | Steric clash | ✅ |
+| Gly→X | X→Gly | ✅ |
+| Pro→X | X→Pro | ✅ |
+| Charge loss | Charge intro | ✅ |
+| Charge flip | (self-symmetric) | ✅ |
+| Hydro→polar | Polar→hydro | ✅ |
+| H-bond loss | H-bond gain | ✅ |
+| Aromatic loss | Aromatic gain | ✅ |
+| β-branch loss | ≈ steric | ✅ |
+| PPII compat→incompat | Gate A | ✅ |
+| PPII spacer→β-branch | Gate A2 | ✅ |
 
 ---
 
-## IDR-Specific Observations
+## Tier S summary
 
-### ClinVar Label Resolution vs Gate & Channel Resolution
+### Structured domains (benign = 0)
 
-Gate & Channel detects **molecular mechanism disruption** (物理的機構破壊).
-ClinVar classifies by **clinical penetrance** (臨床的浸透度).
+| # | Gate | Physics |
+|---|------|---------|
+| 1 | X→Gly (Ch03) | Ramachandran freedom explosion |
+| 2 | Pro→X (Ch05) | Ramachandran constraint release |
+| 3 | β-branch loss in β-strand (Ch03) | Interlock collapse |
+| 4 | Surface salt bridge (Ch09) | Electrostatic zipper disruption |
+| 5 | Polar→hydrophobic buried (Ch03) | H-bond partner loss |
+| 6 | Met sulfur network (Ch03) | Chalcogen network / Zn seismic isolation |
+| 7 | Rigid hub ≥2 chains (Ch08) | Tetramer-interface rigidity |
 
-These are different questions. IDR FP analysis revealed that ~14/29 IDR "FP" variants show molecular evidence of functional disruption but lack sufficient clinical penetrance for ClinVar pathogenic classification. Molecular-adjusted PPV = 91.6%.
+### IDR hard constraints (1D, no coordinates)
 
-**Precedent case: P47S (S46-P47 [S/T]-P motif)**
-ClinVar = Benign (African-ancestry polymorphism, low penetrance). Biochemistry = S46 phosphorylation reduced, apoptosis induction impaired. Gate & Channel = CLOSED (proline-directed kinase motif disruption). The molecular mechanism IS disrupted; the clinical label reflects epidemiology, not physics.
+| # | Gate | Physics |
+|---|------|---------|
+| 8 | Coupled folding (Ch10 Gate C) | 6-partner union face: non-conservative subst. → CLOSED |
+| 9 | [S/T]-P kinase motif (Ch07d) | Pro ring loss → kinase substrate unrecognizable |
+| 10 | PPII spacer β-branch (Ch10 A2) | {A,G}→{V,I,T} restricts φ-angle |
+| 11 | IDR Gly→X (Ch12) | Side-chain introduction constrains required backbone freedom |
+| 12 | NLS charge loss (Ch10 NLS) | Basic→neutral abolishes nuclear import signal |
 
-### True Molecular Positives Classified as ClinVar "Benign" (14 variants)
+### Geta layer (post-closure exceptions)
 
-Each variant below has a specific physical mechanism of disruption identified by Gate & Channel. These are not statistical artifacts — each has an independent physical rationale.
-
-| Variant | Gate(s) fired | Physical mechanism of molecular disruption |
-|---------|---------------|---------------------------------------------|
-| **P47S** | Ch5_IDR_Pro, Ch7_PTM (7d) | [S/T]-P motif: Pro ring loss → CDK5/DYRK2/HIPK2 cannot recognize S46 substrate. **Biochemically confirmed** — S46 phosphorylation reduced in carriers. |
-| **R379S** | Ch10_SLiM (NLS) | NLS3 basic residue R→S: charge +1→0. Importin-α requires basic cluster for nuclear import recognition. Charge loss = signal destruction. |
-| **R379L** | Ch10_SLiM (NLS) | Same as R379S: R→L charge loss at NLS3. Additionally, Leu introduces hydrophobic character incompatible with solvent-exposed signal peptide. |
-| **R379H** | Ch10_SLiM (NLS) | R→H: charge +1→+0.1. Histidine at physiological pH is predominantly neutral. NLS3 signal degraded. |
-| **K292R** | Ch7_PTM (7a) | Ubiquitin conjugation site: K→R preserves charge but LOSES the ε-amino group required for isopeptide bond formation with ubiquitin C-terminal Gly. Ubiquitination abolished despite charge conservation. |
-| **S315T** | Ch7_PTM (7a) | Phosphosite: S→T preserves generic phosphorylation capacity, but AURKA/CDK1/CDK2 substrate recognition may require the specific S hydroxymethyl geometry (vs T's additional methyl group). Kinase specificity disruption. |
-| **R290H** | Ch7_PTM (7b) | ±1 to K291 ubiquitin site: R→H charge reduction (+1→+0.1) disrupts electrostatic environment required for E3 ligase recognition of K291. |
-| **R290C** | Ch7_PTM (7b) | ±1 to K291 ubiquitin site: R→C charge loss (+1→0) + introduction of reactive thiol near ubiquitin conjugation site. |
-| **G293W** | Ch7_PTM, GateB | ±1 to K292 ubiquitin site: G→W introduces 168 Å³ bulk blocking E3 ligase access. Simultaneously, Gly→X backbone constraint (Gate B) destroys IDR flexibility. |
-| **G374R** | Ch7_PTM, Ch10, GateB | Triple mechanism: (1) ±2 to K372/K373 modification sites with charge introduction, (2) NLS2 motif disruption, (3) Gly backbone freedom loss. |
-| **Q375K** | Ch10_SLiM (CT_reg) | CT_reg charge pattern: Q→K charge introduction (+1) in regulatory tail. Disrupts electrostatic balance controlling protein-protein interactions. |
-| **E388A** | Ch10_SLiM (CT_reg) | CT_reg charge pattern: E→A charge loss (−1→0) + desolvation of regulatory tail. Glutamate's carboxylate participates in electrostatic interactions with binding partners. |
-| **E388Q** | Ch10_SLiM (CT_reg) | CT_reg charge pattern: E→Q charge loss (−1→0). Glutamine preserves H-bond capacity but loses negative charge critical for electrostatic regulatory function. |
-| **D393Y** | Ch7_PTM, Ch10 | ±1 to S392 phosphosite: D→Y charge loss (−1→0) + massive volume gain (+82.5 Å³). Disrupts both CK2/CDK2 recognition environment AND CT_reg charge pattern. |
-
-**Summary:** 14/29 IDR "FP" variants (48%) have identified physical mechanisms of molecular disruption. If reclassified as True Molecular Positives, adjusted Specificity = 59.2%, adjusted PPV = 91.6%.
-
-### Remaining FN Categories (73 IDR variants) — Why Each Gate Is Missing
-
-**All FNs represent missing Gates, not threshold problems.** Each category below explains the specific physical knowledge that is lacking and prevents Gate construction.
-
-#### Category 1: Conservative mutations (D→E, L→V, M→I, K→R) — 19 variants
-
-Representative: D21E, D49E, D57E, L14V, L45V, M44V, K386R
-
-**Why these are pathogenic:** The binding partner's pocket is geometrically precise. D→E adds +1 CH₂ group (+1.5 Å side chain length, +27.3 Å³ volume) — conservative by physicochemical tables, but lethal in a rigid binding pocket where 1.5 Å changes the geometry.
-
-**Why no Gate exists:** A Gate for this requires knowing WHICH residues sit in a rigid binding pocket. This information comes from the partner complex structure (X-ray or NMR). For TAD1 residues 17-29, we extracted this from 1YCR (MDM2 complex) and built Gate C. But D21 is NOT at the MDM2 binding face (min_dist = 6.59 Å). D21E is pathogenic due to interaction with a DIFFERENT partner whose complex structure is not in our dataset.
-
-**What would resolve it:** Complex structures for p53 TAD with other binding partners (p300/CBP, TFIIH, etc.). Each new complex structure adds new interface residues to Gate C.
-
-#### Category 2: PRD non-Pro positions (A→V, A→G, T→I) — ~10 variants
-
-Representative: A69V, A78V, A83V, A84V, A86V, A88V, A74G, T81I
-
-**Why these are pathogenic:** The PRD binds SH3 domain proteins through a PPII helix. The PPII structure is formed by [Pro]-[spacer] repeats. Gate A2 captures spacer→β-branch disruption (A→V/I/T), but some mutations (A→G, T→I) involve different physics or positions where the spacer is not between two Pro residues.
-
-**Why no Gate exists:** Gate A2 fires on {A,G}→{V,I,T} but not on other substitutions at non-Pro positions. To know which non-Pro positions are critical for SH3 binding (as opposed to PPII structure), the PRD-SH3 complex structure is required — it would reveal which spacer positions make direct contact with the SH3 binding groove.
-
-**What would resolve it:** Crystal or NMR structure of p53 PRD bound to an SH3 domain (e.g., Abl SH3, PI3K SH3).
-
-#### Category 3: Linker orphans (no SLiM, no PTM) — ~10 variants
-
-Representative: H296R, E298Q, G302E, N310K, N310D, N311S, N311H, Q317H, Q317R, D324H
-
-**Why these are pathogenic:** The linker (290-324) connects the core domain (94-289) to the tetramerization domain (325-356). Its physical function is maintaining the correct spatial relationship between DNA-binding and oligomerization domains. Mutations here disrupt this function.
-
-**Why no Gate exists:** No SLiM has been defined for this region. No binding partner structures exist. The linker's function is "mechanical" (maintaining inter-domain geometry) rather than "binding" (recognizing a specific partner). A persistence length / polymer physics gate was hypothesized (巴) but the gap-based threshold could not separate Pathogenic from Benign variants without additional physical context.
-
-**What would resolve it:** (1) Full-length p53 cryo-EM structure showing linker conformation in the tetramer-DNA complex. (2) NMR dynamics data for the linker region. (3) Kuhn length measurements for p53 IDR segments.
-
-#### Category 4: CTD 360-362 cluster — ~6 variants
-
-Representative: G360V, G360R, G360E, S362N, S362C, S362I
-
-**Why these are pathogenic:** This cluster sits immediately before the CT_reg domain (363-393) but outside our current CT_reg SLiM definition. The 360-362 region may be a boundary/hinge zone analogous to P12 for BOX_I.
-
-**Why no Gate exists:** The CT_reg SLiM boundary is defined at 363. Residues 360-362 fall outside this definition. Extending CT_reg to 357-393 would capture these but would also increase FP. The precise functional boundary requires structural or mutational scanning data.
-
-**What would resolve it:** Systematic mutational analysis of the 355-365 boundary region, or a complex structure showing which CTD residues interact with binding partners (e.g., S100B, SET/TAF-Iβ).
-
-#### Category 5: Isolated IDR Pro — ~8 variants
-
-Representative: P4R, P58R, P58T, P60L, P295L, P301L, P309S, P318L
-
-**Why these are pathogenic:** These Pro residues are not within any defined SLiM, not at SLiM boundaries, and not near PTM sites. Yet their loss causes pathogenicity. The hypothesized mechanism is polymer persistence length maintenance — Pro's rigid ring constrains backbone φ≈-65°, maintaining the "stiffness" of the IDR chain to prevent domain collapse or self-aggregation.
-
-**Why no Gate exists:** The Kuhn length hypothesis predicts that isolated Pro (large gap to neighboring Pro) should be critical. Data analysis confirmed the direction (P295L=Path with gap=22; P300L=Benign with gap=6) but the gap threshold could not cleanly separate Path from Benign across all variants (gap>20: Path=4, Benign=3). An additional physical condition is needed. The "aberrant folding" hypothesis (P→helix-capable residue in high-HELIX_PROP environment triggers unwanted helix formation) was tested and rejected — local HELIX_PROP does not separate the classes (Path mean=0.377, Benign mean=0.403). A partial insight emerged: P295L (mt=L, HELIX_PROP=0.79) vs P295S (mt=S, HELIX_PROP=0.29) at the same position — the replacement residue's helix-forming ability may matter, but insufficient data prevents Gate construction.
-
-**What would resolve it:** (1) Polymer physics simulation of p53 IDR with systematic Pro→X substitutions measuring end-to-end distance and compaction. (2) Circular dichroism spectroscopy of IDR peptide fragments with Pro→Leu vs Pro→Ser mutations, measuring secondary structure content. (3) Kuhn length measurements of p53 IDR segments.
-
-
-## Tier S Summary — Structured Domains (benign=0, position-independent)
-
-| # | Gate | Benign | Physics | Domain |
-|---|------|--------|---------|--------|
-| 1 | →Gly | 0 | Ramachandran freedom explosion | Core |
-| 2 | Pro→X | 0 | Ramachandran constraint release | Core |
-| 3 | β-branch loss in β-strand | 0 | β-sheet interlock collapse | Core |
-| 4 | Salt bridge | 0 | Electrostatic zipper disruption | Core |
-| 5 | polar→hydro (buried) | 0 | H-bond partner loss | Core |
-| 6 | Met sulfur network | 0 | Chalcogen network disruption | Core |
-| 7 | Rigid hub (≥2 chains) | 0 | Tetramer interface rigidity | Tet |
-
-## IDR Hard Constraints (1D physics, no coordinates)
-
-| # | Gate | Physics | Mechanism |
-|---|------|---------|-----------|
-| 8 | Coupled folding (1YCR) | Binding face geometry | ANY mutation at MDM2 interface = CLOSED |
-| 9 | [S/T]-P kinase motif | Cyclic imino acid recognition | Pro ring loss → kinase substrate unrecognizable |
-| 10 | PPII spacer β-branch | φ-angle restriction | {A,G}→{V,I,T} = PPII backbone incompatible |
-| 11 | IDR Gly→X | Backbone freedom = function | Side chain intro = steric constraint on IDR flexibility |
-| 12 | NLS charge loss | Importin-α recognition | Basic→neutral = nuclear import signal abolished |
+| # | Geta | Physics | ClinVar Path rescued |
+|---|------|---------|---------------------|
+| 13 | Geta_VI | V↔I in buried β-branched positions | 0 |
+| 14 | Geta_IDR_PTM | Charge-preserving K↔R, R↔H, S↔T within ±1 of PTM in IDR | 0 |
 
 ---
 
-## 🎮 BREAKIT v2 — Interactive Gate & Channel Explorer
+## Next gates to be written
 
-An interactive educational tool that lets you explore the Gate & Channel framework by attempting to "break" p53 through missense mutations. Select a target residue, choose a substitution, and see which physical gates close — and why.
+Where the framework fails, it names what to add:
 
-**Features:**
-- Full v17 engine (13 channels, 30+ gates, 7 Tier S constraints)
-- 6 stages: Core Interior → Loops & Pro → Surface & DNA → Zn Cascade → IDR → Dark Matter
-- Zero fitted parameters — all physics from textbooks
-- Japanese/English bilingual lore for each residue
+| Category | Example | Gate needed | Data required |
+|----------|---------|-------------|---------------|
+| Conservative substitutions | D21E, D49E | Partner-pocket fingerprint | Additional complex structures |
+| PRD non-Pro positions | A78V, T81I | SH3-like binding pocket | SH3-PRD complex structure |
+| Linker orphans | N310K, Q317H | Dynamics / persistence | NMR or cryo-EM dynamics |
+| CTD 360–362 cluster | G360V, S362N | SLiM boundary extension | Mutational scanning |
+| Isolated IDR Pro→X | P4R, P58R | Polymer compaction | SAXS / smFRET measurements |
+| **KRAS Q61H/L** | Q61H | Catalytic / cofactor channel | Transition-state geometry (Mg²⁺/GTP) |
+| **TDP-43 M337V** | M337V | Aggregation / LLPS channel | Aromatic spacing, charge patterning |
 
-**Run:** Open `breakit_v2.jsx` as a React component, or paste into any React playground.
+---
 
-> *"If you can turn a classifier into a puzzle game, it's not a black box."*
+## Repository structure
+
+```
+pathogenicity_gates/          # Installable Python package
+  ├── channels/               # Channel and Geta logic
+  ├── data/                   # Bundled per-protein annotations
+  │   ├── p53/                # YAML + PDB + partner_face.json (59 residues)
+  │   ├── kras/
+  │   ├── tdp43/
+  │   └── brca1/
+  └── cli.py                  # Command-line interface
+
+tests/                        # pytest suite
+Result/                       # Per-variant prediction outputs and run logs
+supplementary/                # Machine-readable CSV/JSON (S1–S6 Tables)
+paper_markdown/               # Design rationale and gate specifications
+```
+
+---
+
+## AlphaFold compatibility
+
+- **ADAPTABLE channels** (Ch03, Ch04, Ch05, Ch06, Ch09): accept AlphaFold structures with pLDDT > 70.
+- **UNIVERSAL channels** (Ch07, Ch10, Ch11, Ch12, Getas): operate from sequence and annotation alone — AlphaFold confidence is irrelevant.
+- **Gate C extension**: AlphaFold-Multimer predictions can supply partner-complex interfaces where experimental structures are unavailable.
+
+---
+
+## Reproducibility
+
+The framework is deterministic and rule-based. The archived Zenodo release and PyPI package v0.5.1 provide the version-locked snapshot:
+
+```bash
+pip install pathogenicity-gates==0.5.1
+pathogenicity-gates predict-batch --protein p53 \
+    --input <bundled tp53_clinvar_missense.csv> \
+    --output v18_final_results.json
+```
+
+Any change in outputs is traceable to a changed input file, an altered gate definition, or a scope correction — never to stochastic optimization.
+
+---
+
+## Citation
+
+If you use this framework, please cite:
+
+> M.Iizumi. A zero-parameter first-principles gate framework for full-length TP53 missense variant interpretation. *PLOS Computational Biology* (under review). 2026.
+
+**Zenodo DOI:** [10.5281/zenodo.19214741](https://doi.org/10.5281/zenodo.19214741)
+
+**ORCID:** [0009-0007-0755-403X](https://orcid.org/0009-0007-0755-403X)
+
+---
+
+## Acknowledgments
+
+AI tools were used in a limited, supervised manner to support framework development, manuscript drafting, code inspection, and hypothesis exploration. Specific contributions:
+No AI tool was used as a substitute for scientific judgment. All framework definitions, analyses, and interpretations were reviewed and approved by the author.
+
+---
+
+## License
+
+MIT
+
+---
+
+*"If you can turn a classifier into a puzzle game, it's not a black box."*
 
 Credits: Ramachandran (1963) · Flory (1969) · Barlow & Thornton (1983) · Burley & Petsko (1985)
